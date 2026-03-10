@@ -18,3 +18,4 @@ The tool provides:
 - Verify evidence integrity using SHA-256
 - Export digital forensic reports
 - Support log files and SQLite databases
+- Visualization Graph

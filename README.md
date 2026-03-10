@@ -11,10 +11,10 @@ The tool provides:
 
 # Features
 
-• Analyze authentication logs
-• Detect brute force attacks
-• Identify suspicious IP activity
-• Build login timeline
-• Verify evidence integrity using SHA-256
-• Export digital forensic reports
-• Support log files and SQLite databases
+- Analyze authentication logs
+- Detect brute force attacks
+- Identify suspicious IP activity
+- Build login timeline
+- Verify evidence integrity using SHA-256
+- Export digital forensic reports
+- Support log files and SQLite databases

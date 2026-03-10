@@ -3,7 +3,7 @@ from tkinter import filedialog, messagebox
 from collections import defaultdict
 import hashlib
 import sqlite3
-
+import matplotlib.pyplot as plt
 
 # Global variables (store last analysis)
 
@@ -11,6 +11,7 @@ last_summary = ""
 last_suspicious = []
 last_timeline = []
 last_hash = ""
+last_ip_failed = {}
 
 # Hash function (Evidence Integrity)
 
@@ -28,9 +29,9 @@ def calculate_hash(filepath):
 # Core Processing Function
 
 def process_records(records, source_path):
-    global last_summary, last_suspicious, last_timeline, last_hash
+    global last_summary, last_suspicious, last_timeline, last_hash, last_ip_failed
 
-    # Clear old GUI data
+    # Clear GUI
     summary_text.set("")
     hash_text.set("")
     suspicious_box.delete(0, tk.END)
@@ -49,33 +50,41 @@ def process_records(records, source_path):
 
         if status == "LOGIN_SUCCESS":
             success += 1
+
         elif status == "LOGIN_FAILED":
             failed += 1
             ip_failed_count[ip] += 1
             ip_users[ip].add(user)
 
-        # Limit timeline display to avoid GUI freeze
+        # Limit timeline to avoid GUI freeze
         if len(timeline) < 300:
             timeline.append(f"{date} {time} | {user} | {status} | {ip}")
 
-    # Sort timeline chronologically
+    # Save failed IP data for graph
+    last_ip_failed = dict(ip_failed_count)
+
+    # Sort timeline
     timeline.sort()
 
     # Detect suspicious IPs
     suspicious = []
+
     for ip, count in ip_failed_count.items():
         user_count = len(ip_users[ip])
 
         if count >= 10:
             suspicious.append(f"{ip} → {count} failed attempts (HIGH RISK - POSSIBLE BRUTE FORCE)")
+
         elif count >= 5:
             suspicious.append(f"{ip} → {count} failed attempts (FLAGGED)")
+
         elif user_count >= 3:
             suspicious.append(f"{ip} → {count} failed attempts (MULTI-USER ATTEMPTS)")
+
         else:
             suspicious.append(f"{ip} → {count} failed attempts")
 
-    # Find top attacker
+    # Top attacker
     if ip_failed_count:
         top_attacker = max(ip_failed_count, key=ip_failed_count.get)
         top_count = ip_failed_count[top_attacker]
@@ -83,11 +92,10 @@ def process_records(records, source_path):
         top_attacker = "None"
         top_count = 0
 
-    # Hash evidence file
-    file_hash = calculate_hash(source_path)
-    last_hash = file_hash
+    # Evidence hash
+    last_hash = calculate_hash(source_path)
 
-    # Save results globally
+    # Summary
     last_summary = (
         f"Total Attempts: {total}\n"
         f"Successful Logins: {success}\n"
@@ -259,6 +267,27 @@ def export_report():
         messagebox.showerror("Error", "Failed to save report.")
 
 
+def show_attack_graph():
+    if not last_ip_failed:
+        messagebox.showwarning("Warning", "Run analysis first!")
+        return
+
+    sorted_ips = sorted(last_ip_failed.items(), key=lambda x: x[1], reverse=True)
+
+    ips = [ip for ip, _ in sorted_ips][:10]
+    counts = [count for _, count in sorted_ips][:10]
+
+    plt.figure()
+    plt.bar(ips, counts)
+
+    plt.xlabel("IP Address")
+    plt.ylabel("Failed Login Attempts")
+    plt.title("Failed Login Attempts Per IP")
+
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
 # GUI Layout
 
 
@@ -277,6 +306,9 @@ db_btn.pack(pady=5)
 
 export_btn = tk.Button(root, text="Export Forensic Report", command=export_report)
 export_btn.pack(pady=5)
+
+graph_btn = tk.Button(root, text="Show Attack Graph", command=show_attack_graph)
+graph_btn.pack(pady = 5)
 
 # Summary Section
 summary_frame = tk.Frame(root)
@@ -315,5 +347,6 @@ tk.Label(time_frame, text="Login Timeline", font=("Arial", 12, "bold")).pack()
 
 timeline_box = tk.Listbox(time_frame, width=80, height=10)
 timeline_box.pack()
+
 
 root.mainloop()

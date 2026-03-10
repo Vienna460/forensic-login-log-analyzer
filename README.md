@@ -19,3 +19,11 @@ The tool provides:
 - Export digital forensic reports
 - Support log files and SQLite databases
 - Visualization Graph
+
+## Installation
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+## Run
+python LogAnalyzer.py

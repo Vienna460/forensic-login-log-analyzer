@@ -26,4 +26,5 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 ## Run
-python LogAnalyzer.py
+python LogAnalyzerMain.py
+on terminal
